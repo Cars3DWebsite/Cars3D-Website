@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARS ON SOLANA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Press Start 2P', cursive; 
+            background: black; 
+            color: white;
+            overflow-x: hidden;
+        }
+
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: absolute;
+            top: 50%;
+            width: 280px;
+            height: 400px;
+            background: black;
+            color: white;
+            border: 3px solid white;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(-50%);
+            box-shadow: 0px 0px 5px white;
+        }
+
+        .left-sidebar {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    width: 350px; /* Adjust size to fit the frame */
+    height: 200px; /* Adjust height based on the image */
+    transform: translateY(-50%);
+    
+    
+    background-image: url('leftsidebar.png'); /* Replace with your image file */
+    background-size: contain; /* Ensure it fits the frame */
+    background-repeat: no-repeat;
+    background-position: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.left-sidebar h2 {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.left-sidebar .social-icons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.left-sidebar .social-icons img {
+    width: 40px;
+    height: 40px;
+}
+
+.left-sidebar a {
+    color: white;
+    text-decoration: none;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.right-sidebar {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 370px; /* Reduce width slightly */
+    height: 500px; /* Reduce height for better fit */
+    transform: translateY(-50%);
+    background-image: url('rightsidebar2.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center elements */
+    padding: 10px;
+    gap: 15px; /* Reduce gaps between elements */
+}
+
+
+.right-sidebar h2 {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.right-sidebar label {
+    font-size: 16px; /* Bigger text */
+}
+
+.right-sidebar .color-picker {
+    background-color: black; /* Black background */
+    color: white; /* White text */
+    border: 2px solid white; /* White border */
+    padding: 5px;
+    width: 75%; /* Reduce width slightly */
+    text-align: center;
+}
+
+.right-sidebar button {
+    background-color: black; /* Black background */
+    color: white; /* White text */
+    border: 2px solid white; /* White border */
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 50%; /* Ensure it fits inside */
+    text-transform: uppercase;
+}
+
+.right-sidebar button:hover {
+    background-color: white; /* White background on hover */
+    color: black; 
+}
+
+        .left-sidebar { left: 0; }
+        .right-sidebar { right: 0; }
+
+        /* Sidebar moves fully left or right */
+        .collapsed-left { transform: translateX(-280px) translateY(-50%); }
+        .collapsed-right { transform: translateX(280px) translateY(-50%); }
+
+        /* Minimize Buttons (Attached to Sidebar) */
+        .toggle-btn {
+            position: absolute;
+            width: 50px; /* Bigger button */
+            height: 50px;
+            background: black;
+            border: 3px solid white;
+            color: white; /* Now white for visibility */
+            cursor: pointer;
+            font-size: 24px; /* Bigger text */
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0px 0px 5px white;
+        }
+
+        /* Keep buttons positioned relative to the sidebar */
+        .toggle-left { left: 100%; top: 50%; transform: translate(-100%, -50%); }
+        .toggle-right { right: 100%; top: 50%; transform: translate(100%, -50%); }
+
+        /* Button stays attached when collapsed */
+        .collapsed-left .toggle-left { transform: translate(0, -50%); }
+        .collapsed-right .toggle-right { transform: translate(0, -50%); }
+
+        /* Customization Panel */
+        .customization-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+        .color-picker {
+            width: 60%;
+            padding: 5px;
+        }
+
+        /* Play Button */
+        .button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 0vh; /* Adjust this value if needed */
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
+    pointer-events: none; /* Prevents empty space from being clickable */
+}
+
+.play-button {
+    width: auto; 
+    height: auto;
+    max-width: 250px;
+    cursor: pointer;
+    pointer-events: auto;
+    display: block;
+    object-fit: contain;
+    border: none;
+    padding: 0;
+    margin: 0;
+
+    user-select: none; 
+    outline: none;
+
+}
+
+.play-text {
+    position: absolute;
+    bottom: 50%; /* Moves the text inside the play button */
+    left: 50%;
+    transform: translate(-50%, 50%);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 15px;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    pointer-events: none; /* Ensures only the button is clickable */
+}
+
+
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { width: 220px; height: 350px; }
+            .toggle-left { left: 100%; }
+            .toggle-right { right: 100%; }
+            .button-container { bottom: -8vh; }
+        }
+
+        /* Social Icons */
+.social-icons {
+    display: flex;
+    
+    gap: 10px;
+    margin-top: 5px; /* Adjust spacing */
+    margin-bottom: 10px;
+}
+
+.social-icons img {
+    width: 50px;
+    height: 50px;
+    transition: opacity 0.2s ease;
+}
+
+.social-icons img:hover {
+    opacity: 0.7;
+}
+/* Car Model Scroll Section */
+/* Car Model Scroll Section */
+.car-selection-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 12px; /* Slightly more space between elements */
+    margin-top: 5px; /* Increase margin */
+}
+
+/* Scroll Buttons */
+.scroll-btn {
+    width: 30px !important;  /* Increase button size */
+    height: 30px !important;  /* Keep square shape */
+    font-size: 16px;  /* Bigger arrow size */
+    padding: 0;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    white-space: nowrap;
+
+}
+.scroll-btn:hover {
+    background: white;
+    color: black;
+}
+
+/* Fix the Car Name Box */
+.car-display-box {
+    width: 130px; /* Increase width */
+    height: 30px; /* Increase height */
+    font-size: 12px; /* Bigger font */
+    font-weight: bold; /* Make text stand out */
+    padding: 3px;
+    text-align: center;
+    line-height: 30px;
+    white-space: nowrap;
+}
+
+
+/* Scrollable Car List */
+.car-scroll-wrapper {
+    width: 180px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+/* Only show one car at a time */
+.car-list {
+    display: flex;
+    overflow-x: hidden;
+    scroll-snap-type: x mandatory;
+    white-space: nowrap;
+    width: 100%;
+    padding: 5px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Individual Car Item */
+.car-item {
+    width: 150px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    background-color: black;
+    flex-shrink: 0;
+    margin: 0 10px;
+    scroll-snap-align: center;
+}
+
+/* Airdrop Minigame Popup */
+/* Popup Sign Styling */
+/* Popup Sign Styling */
+.popup-sign {
+    position: absolute;
+    bottom: 6vh; /* Move it down closer to the Play button */
+    left: 50%;
+    transform: translateX(-50%);
+    display: none; /* Hidden by default */
+    text-align: center;
+    width: 250px;
+    z-index: 10; /* Ensure it's above everything */
+}
+
+.popup-sign img {
+    width: 100%;
+}
+
+/* Ensure text is inside the sign */
+.popup-text {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    color: black;
+    text-align: center;
+    width: 80%;
+    z-index: 11; /* Ensures text is above the sign */
+}
+.car-scroll-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    overflow: hidden;
+    padding: 10px 0;
+}
+
+.car-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    white-space: nowrap;
+    width: 100%;
+    padding: 5px;
+}
+
+.car-item {
+    width: 80px;
+    height: 50px;
+    cursor: pointer;
+    border: 2px solid white;
+    transition: transform 0.2s ease;
+}
+
+.car-item:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+        .left-sidebar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: auto;
+            background-size: contain;
+            padding: 10px;
+        }
+
+        .right-sidebar {
+            position: absolute;
+            bottom: 25vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+            background: none;
+            border: none;
+        }
+
+        /* Hide customization controls but KEEP car selection visible */
+        .right-sidebar h2,
+        .right-sidebar input[type="color"],
+        .right-sidebar input[type="range"] {
+            display: none;
+        }
+        
+        /* Hide labels except car selection label */
+        .right-sidebar label:not(.car-selection-label) {
+            display: none;
+        }
+        
+        /* Hide Apply button but KEEP car selection buttons */
+        .right-sidebar button:not(.scroll-btn) {
+            display: none;
+        }
+        
+        /* Special styling for car selection on mobile */
+        .car-selection-container {
+            gap: 15px; /* Even more space on mobile */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid white;
+        }
+        
+        .car-display-box {
+            color: white;
+            font-weight: bold;
+            width: 160px; /* Slightly smaller on mobile but still spacious */
+            margin: 0 5px;
+        }
+
+        .play-button {
+            display: none;
+        }
+        
+        .scroll-btn {
+            width: 50px !important;
+        height: 40px !important;
+        font-size: 22px;
+        background: black;
+        color: white;
+        border: 2px solid white;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        }
+
+        .scroll-btn:hover {
+            background: white;
+            color: black;
+        }
+    }
+    #loadingScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Press Start 2P', cursive;
+    }
+
+    #loadingTitle {
+        color: white;
+        font-size: 24px;
+        margin-bottom: 10px; /* Increased space */
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    }
+
+    /* Positioned car and road as a unified element */
+    .loading-animation {
+        position: relative;
+        width: 250px;
+        height: 60px;
+        margin-bottom: 30px;
+    }
+
+    /* Car loading animation - repositioned */
+    .eightBitCar {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        color: white;
+        animation: driveCar 1s infinite;
+        z-index: 2;
+    }
+
+    /* Road animation beneath car - repositioned */
+    .pixelRoad {
+        position: absolute;
+        top: 30px; /* Position road below car */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 20px;
+        background: repeating-linear-gradient(
+            90deg,
+            #333 0px,
+            #333 15px,
+            #222 15px,
+            #222 30px
+        );
+        background-size: 60px 100%;
+        animation: moveRoad 0.5s linear infinite;
+        z-index: 1;
+    }
+
+    #loadingBar {
+        width: 70%;
+        max-width: 400px;
+        height: 30px;
+        border: 3px solid white;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    #loadingProgress {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(
+            45deg,
+            #00ff00 0%,
+            #66ff66 25%,
+            #00ff00 50%,
+            #66ff66 75%,
+            #00ff00 100%
+        );
+        background-size: 200% 100%;
+        animation: loadingGradient 2s linear infinite;
+        transition: width 0.3s ease-out;
+    }
+
+    #loadingText {
+        color: white;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+
+    #loadingCar {
+        font-size: 24px;
+        margin-top: 10px;
+        color: #00ff00;
+    }
+
+    /* Loading dots animation */
+    .loading-dots {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        background-color: #00ff00;
+        border-radius: 50%;
+        animation: dotPulse 1.5s infinite;
+    }
+
+    .dot:nth-child(2) {
+        animation-delay: 0.3s;
+    }
+
+    .dot:nth-child(3) {
+        animation-delay: 0.6s;
+    }
+
+    @keyframes dotPulse {
+        0%, 100% { opacity: 0.2; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes driveCar {
+        0% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-3px); }
+        100% { transform: translateX(-50%) translateY(0); }
+    }
+
+    @keyframes loadingGradient {
+        0% { background-position: 0% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    @keyframes moveRoad {
+        0% { background-position: 0 0; }
+        100% { background-position: -30px 0; }
+    }
+
+    /* Coming Soon Sign */
+    .coming-soon-sign {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .coming-soon-sign.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .sign-content {
+        background-color: black;
+        border: 3px solid white;
+        padding: 30px;
+        text-align: center;
+        max-width: 400px;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    
+    .sign-content h2 {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 24px;
+        color: #00ff00;
+        margin-bottom: 20px;
+    }
+    
+    .sign-content p {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 12px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .sign-content button {
+        font-family: 'Press Start 2P', cursive;
+        background-color: black;
+        color: white;
+        border: 2px solid white;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .sign-content button:hover {
+        background-color: white;
+        color: black;
+    }
+   </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div id="loadingTitle">CARS ON SOLANA</div>
+ 
+        <div id="loadingText">LOADING CARS</div>
+        
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    <script>
+        // Guaranteed timeout to force-close the loading screen
+        console.log("Setting up guaranteed loading timeout");
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('loadingScreen');
+          if (loadingScreen) {
+            console.log("FORCING LOADING SCREEN TO CLOSE");
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease-out';
+            
+            // Hide completely after transition
+            setTimeout(function() {
+              loadingScreen.style.display = 'none';
+              console.log("LOADING SCREEN FORCEFULLY CLOSED");
+            }, 500);
+          }
+        }, 10000); // 8 seconds timeout
+      </script>
+
+
+  <!-- Left Sidebar (Token Info) with New Border -->
+<div class="left-sidebar" id="leftSidebar">
+    <BR><BR><BR>
+    <p>Roni (Runi) Baker 2025</p>
+
+
+    <!-- Token Address -->
+   
+</div>
+
+
+<div class="right-sidebar" id="rightSidebar">
+    <h2>Customize</h2>
+
+    <!-- Color Picker -->
+    <label for="colorPicker">Car Color:</label>
+    <input type="color" id="colorPicker" class="color-picker">
+    
+
+
+<!-- Roughness Slider -->
+<label for="roughnessSlider">Gloss:</label>
+<input type="range" id="roughnessSlider" class="slider" min="0" max="1" step="0.01" value="0.5">
+<button onclick="applyCustomization()">Apply</button>
+
+
+<!-- Car Selection Scroll -->
+<label>Car Model:</label>
+<div class="car-selection-container">
+    <button class="scroll-btn scroll-left">&#9664;</button> <!-- Left Button -->
+    <div class="car-display-box" id="carName">Ferrari</div> <!-- Only One Car Visible -->
+    <button class="scroll-btn scroll-right">&#9654;</button> <!-- Right Button -->
+</div>
+
+</div>
+
+ 
+<!-- Play Button -->
+<div class="button-container">
+    <img id="playButton" src="staticgif.png" class="play-button">
+    <span class="play-text">PLAY</span>
+</div>
+
+<div id="comingSoonSign" class="coming-soon-sign">
+    <div class="sign-content">
+        <h2>COMING SOON</h2>
+        <p>Stay tuned for the game launch!</p>
+        <button id="closeSignBtn">CLOSE</button>
+    </div>
+</div>
+<script>
+    // Wait for the document to be fully loaded
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get elements
+        const playButton = document.getElementById("playButton");
+        const comingSoonSign = document.getElementById("comingSoonSign");
+        const closeSignBtn = document.getElementById("closeSignBtn");
+        
+        // Show the sign when the play button is clicked
+        playButton.addEventListener("click", function() {
+            comingSoonSign.classList.add("visible");
+        });
+        
+        // Hide the sign when the close button is clicked
+        closeSignBtn.addEventListener("click", function() {
+            comingSoonSign.classList.remove("visible");
+        });
+        
+        // Also hide the sign when clicking outside the content box
+        comingSoonSign.addEventListener("click", function(e) {
+            // Only close if clicking the background, not the content
+            if (e.target === comingSoonSign) {
+                comingSoonSign.classList.remove("visible");
+            }
+        });
+    });
+</script>
+
+    <!-- Three.js Scene -->
+
+        
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const playButton = document.querySelector(".play-button");
+    
+            if (!playButton) {
+                console.error("🚨 Play button not found! Check the class or ID.");
+                return;
+            }
+    
+            playButton.addEventListener("mouseover", function () {
+                console.log("🎬 Hover detected! Switching to GIF.");
+                this.src = "play123.gif";
+            });
+    
+            playButton.addEventListener("mouseout", function () {
+                console.log("⏸ Mouse left! Switching back to static image.");
+                this.src = "staticgif.png";
+            });
+        });
+
+        document.getElementById("playButton").ondragstart = function() {
+    return false;
+};
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/EXRLoader.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/RGBELoader.js"></script>
+   <script>
+
+const exrLoader = new THREE.EXRLoader();
+exrLoader.load('hdri.exr', function (texture) {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture; // Apply EXR for reflections
+    scene.background = texture;  // (Optional) Set background to EXR
+});
+
+
+
+
+const playButton = document.getElementById("playButton");
+
+// Change to GIF on hover
+playButton.addEventListener("mouseover", function () {
+    playButton.src = "play123.gif"; // Switch to animated GIF
+});
+
+// Change back to static image when the mouse leaves
+playButton.addEventListener("mouseout", function () {
+    playButton.src = "staticgif.png"; // Switch back to static PNG
+});
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".car-button").forEach(button => {
+        button.addEventListener("click", function () {
+            let selectedCar = this.getAttribute("data-car");
+            loadNewCar(selectedCar);
+        });
+    });
+});
+
+       let scene, camera, renderer, car, softbox, carGroup;
+   
+       // Color Picker Functionality (ONLY CHANGES BASE_COLOR MATERIA
+
+       function init() {
+           scene = new THREE.Scene();
+           camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+           camera.position.set(0, 1.5, 7); // Slightly higher for better framing
+           scene.add(camera);
+   
+           renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+           renderer.setSize(window.innerWidth, window.innerHeight);
+           renderer.shadowMap.enabled = true;
+           renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+           document.body.appendChild(renderer.domElement);
+   
+           // === Load Your Softbox GLB ===
+           // Load the Beveled Softbox
+const textureLoader = new THREE.TextureLoader();
+const groundTexture = textureLoader.load('ground_texture.jpg'); // Use a light floor texture
+
+// Fix stretching by repeating the texture
+groundTexture.wrapS = THREE.RepeatWrapping;
+groundTexture.wrapT = THREE.RepeatWrapping;
+groundTexture.repeat.set(10, 10); // Adjust the tiling as needed
+
+const gltfLoader = new THREE.GLTFLoader();
+gltfLoader.load('softbox.glb', function (gltf) {
+    softbox = gltf.scene;
+    softbox.scale.set(79, 79, 79);
+    softbox.position.set(0, -0.93, 0);
+
+    softbox.traverse((node) => {
+        if (node.isMesh) {
+            node.receiveShadow = true;
+
+            // Light gray color for softbox
+            node.material.color.set(0xb0b0b0); // Light gray
+            node.material.map = groundTexture; // Apply fixed texture
+            node.material.roughness = 0.7; // Slightly rough for realism
+            node.material.metalness = 0; // Matte look to avoid reflections
+            node.material.needsUpdate = true;
+        }
+    });
+
+    scene.add(softbox);
+});
+
+// === ADD A SEPARATE LIGHT GRAY GROUND PLANE ===
+const groundGeometry = new THREE.PlaneGeometry(50, 50);
+const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0xc0c0c0, // Light gray floor
+    map: groundTexture,
+    roughness: 0.8,
+    metalness: 0
+});
+
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2; // Rotate to lie flat
+ground.position.y = -1.0; // Slightly below the car
+ground.receiveShadow = true;
+scene.add(ground);
+
+
+
+   
+           // === Adjusted Spotlight (Prevent Overexposure) ===
+           // === Soft Fill Light ===
+const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+fillLight1.position.set(2, 4, 2); // Positioned slightly above and to the side
+fillLight1.castShadow = true;
+fillLight1.shadow.mapSize.width = 2048;
+fillLight1.shadow.mapSize.height = 2048;
+fillLight1.shadow.radius = 10; // Softer shadows
+fillLight1.shadow.bias = -0.002;
+scene.add(fillLight1);
+
+   
+           // === Global Ambient Light (Softens Dark Areas) ===
+           const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Slightly lowered
+           scene.add(ambientLight);
+   
+           // === Soft Fill Light (Behind Car) ===
+           const fillLight = new THREE.DirectionalLight(0xffffff, 0.1); // Just enough to soften the shadow
+           fillLight.position.set(0, 0, -5);
+           fillLight.castShadow = true; // No hard shadows, just soft fill
+           scene.add(fillLight);
+   
+           // === Convert Point Lights (Turn Off Shadows) ===
+           const pointLightIntensity = 1.4;
+   
+           const createPointLight = (x, y, z) => {
+               const light = new THREE.PointLight(0xffffff, pointLightIntensity, 11, 2);
+               light.position.set(x, y, z);
+               light.castShadow = true; // TURN OFF SHADOWS FROM POINT LIGHTS
+               scene.add(light);
+           };
+   
+         createPointLight(0.031071, 6.53997, 5.50731);
+         createPointLight(-4.50886, 2, 5.50731);
+         createPointLight(0, -2.53997, 5.50731);
+         createPointLight(4.57107, 2, 5.50731);
+        
+   
+           // === Car Setup ===
+           carGroup = new THREE.Group();
+           scene.add(carGroup);
+   
+           // Load the Car Model
+           gltfLoader.load('porsche.glb', function (gltf) {
+    car = gltf.scene;
+    car.scale.set(1.2, 1.2, 1.2);
+
+    const bbox = new THREE.Box3().setFromObject(car);
+    const center = bbox.getCenter(new THREE.Vector3());
+    car.position.sub(center);
+    carGroup.add(car);
+
+    car.traverse((node) => {
+    if (node.isMesh && node.material) {
+        console.log("🔍 Material Name:", node.material.name);
+
+        // Enable shadows
+        node.castShadow = true;
+        node.receiveShadow = true;
+
+        // Ensure the material is MeshStandardMaterial or MeshPhysicalMaterial
+        if (!(node.material instanceof THREE.MeshStandardMaterial) &&
+            !(node.material instanceof THREE.MeshPhysicalMaterial)) {
+            node.material = new THREE.MeshStandardMaterial({
+                color: node.material.color,
+                metalness: 0.5,
+                roughness: 0.5,
+                envMap: scene.environment,
+                envMapIntensity: 7
+            });
+        }
+
+        // Apply EXR environment reflections
+        node.material.envMap = scene.environment;
+        node.material.envMapIntensity = 7;
+        node.material.needsUpdate = true;
+
+        // Store the car paint material for customization
+        const materialName = node.material.name.toLowerCase();
+        if (materialName.includes("body") || 
+            materialName.includes("paint") || 
+            materialName.includes("carpaint") || 
+            materialName.includes("color")) {
+            carMaterial = node.material;
+            console.log("✅ Found Car Paint Material:", carMaterial.name);
+        }
+    }
+});
+
+carGroup.add(car);
+
+});
+
+
+
+          
+           // === Camera Controls for Smooth Interaction ===
+           document.addEventListener('mousedown', (event) => {
+    // Prevent rotation when clicking sliders
+    if (event.target.classList.contains("slider")) return;
+    
+    isDragging = true;
+    previousMouseX = event.clientX;
+});
+
+   
+           document.addEventListener('mousemove', (event) => {
+               if (isDragging) {
+                   let deltaX = event.clientX - previousMouseX;
+                   carGroup.rotation.y += deltaX * 0.005;
+                   previousMouseX = event.clientX;
+               }
+           });
+   
+           document.addEventListener('mouseup', () => {
+               isDragging = false;
+           });
+   
+           animate();
+       }
+   
+       function animate() {
+           requestAnimationFrame(animate);
+           if (!isDragging) {
+               carGroup.rotation.y += 0.002;
+           }
+           camera.lookAt(carGroup.position);
+           renderer.render(scene, camera);
+       }
+   
+       init();
+
+       document.getElementById("colorPicker").addEventListener("input", (event) => {
+    if (carMaterial) {
+        carMaterial.color.set(event.target.value);
+        carMaterial.needsUpdate = true;
+    }
+});
+
+document.getElementById("roughnessSlider").addEventListener("input", function(event) {
+    if (carMaterial) {
+        let glossValue = parseFloat(event.target.value);
+        carMaterial.roughness = 1 - glossValue;
+        carMaterial.metalness = glossValue;
+        carMaterial.needsUpdate = true;
+        console.log(`🎛️ Updated Gloss! Roughness: ${1 - glossValue}, Metalness: ${glossValue}`);
+    }
+});
+
+        // Car Selection
+        document.querySelectorAll(".car-button").forEach(button => {
+    button.addEventListener("click", function() {
+        let selectedCar = this.getAttribute("data-car");
+        loadNewCar(selectedCar);
+    });
+});
+
+        
+        // Function to Load a New Car Model
+        function loadNewCar(carFile, newColor = null, glossValue = null) {
+    if (carGroup) {
+        scene.remove(carGroup);
+    }
+
+    carGroup = new THREE.Group();
+    carGroup.userData.carFile = carFile; // Store the car file for reloading later
+    scene.add(carGroup);
+
+    const gltfLoader = new THREE.GLTFLoader();
+    gltfLoader.load(carFile, function (gltf) {
+        let newCar = gltf.scene;
+        newCar.scale.set(1.2, 1.2, 1.2);
+
+        const bbox = new THREE.Box3().setFromObject(newCar);
+        const center = bbox.getCenter(new THREE.Vector3());
+        newCar.position.sub(center);
+
+        newCar.traverse((node) => {
+            if (node.isMesh) {
+                node.castShadow = true;
+                node.receiveShadow = true;
+
+                if (!(node.material instanceof THREE.MeshStandardMaterial)) {
+                    node.material = new THREE.MeshStandardMaterial({
+                        color: node.material.color,
+                        metalness: 0.5,
+                        roughness: 0.5,
+                        envMap: scene.environment,
+                        envMapIntensity: 5
+                    });
+                }
+
+                node.material.envMap = scene.environment;
+                node.material.envMapIntensity = 5;
+                node.material.needsUpdate = true;
+
+                // Detect car paint material
+                if (["body", "paint", "carpaint", "color"].some(name => node.material.name.toLowerCase().includes(name))) {
+                    carMaterial = node.material;
+                    console.log("✅ New Car Paint Material:", carMaterial.name);
+
+                    // Apply color and gloss settings (if provided)
+                    if (newColor) {
+                        carMaterial.color.set(newColor);
+                    }
+                    if (glossValue !== null) {
+                        carMaterial.roughness = 1 - glossValue;
+                        carMaterial.metalness = glossValue;
+                    }
+
+                    carMaterial.needsUpdate = true;
+                }
+            }
+        });
+
+        carGroup.add(newCar);
+        renderer.render(scene, camera); // Force update after loading
+    });
+}
+
+
+function applyCustomization() {
+    if (!carGroup) return;
+
+    let selectedCarFile = carModels[currentCarIndex].file; // Always use the currently selected car
+    let selectedColor = document.getElementById("colorPicker").value;
+    let glossValue = parseFloat(document.getElementById("roughnessSlider").value);
+
+    console.log(`🎨 Applying customization to: ${carModels[currentCarIndex].name}`);
+
+    // Ensure we apply changes to the correct car material
+    carGroup.traverse((node) => {
+        if (node.isMesh && node.material) {
+            const materialName = node.material.name.toLowerCase();
+            if (materialName.includes("body") || 
+                materialName.includes("paint") || 
+                materialName.includes("carpaint") || 
+                materialName.includes("color")) {
+                node.material.color.set(selectedColor);
+                node.material.roughness = 1 - glossValue;
+                node.material.metalness = glossValue;
+                node.material.needsUpdate = true;
+                console.log(`✅ Customization applied to ${carModels[currentCarIndex].name}`);
+            }
+        }
+    });
+}
+
+
+
+
+
+   </script>
+
+
+<script>
+    // Enhance mobile experience with improved touch event handling
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("📢 Page Loaded - Attaching Event Listeners");
+
+    const leftButton = document.querySelector(".scroll-left");
+    const rightButton = document.querySelector(".scroll-right");
+    const carNameBox = document.getElementById("carName");
+
+    if (!leftButton || !rightButton || !carNameBox) {
+        console.error("🚨 Error: Car selection elements not found!");
+        return;
+    }
+
+    // Enhance click event for better mobile support
+    leftButton.addEventListener("click", function(e) {
+        e.preventDefault(); // Prevent any default behavior
+        console.log("⬅ Left Button Clicked");
+        changeCarModel(-1);
+    });
+
+    rightButton.addEventListener("click", function(e) {
+        e.preventDefault(); // Prevent any default behavior
+        console.log("➡ Right Button Clicked");
+        changeCarModel(1);
+    });
+
+    // Add touch events for mobile
+    leftButton.addEventListener("touchstart", function(e) {
+        e.preventDefault(); // Prevent scrolling
+        console.log("📱 Left Button Touch");
+        changeCarModel(-1);
+    });
+
+    rightButton.addEventListener("touchstart", function(e) {
+        e.preventDefault(); // Prevent scrolling
+        console.log("📱 Right Button Touch");
+        changeCarModel(1);
+    });
+
+    // Prevent zooming on double tap
+    document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 300;
+        if (lastTap && (now - lastTap) < DOUBLE_TAP_DELAY) {
+            e.preventDefault();
+        }
+        lastTap = now;
+    }, false);
+
+    // Load the first car when the page loads
+    loadSelectedCar();
+});
+
+// Track last tap time for preventing double-tap zoom
+let lastTap = 0;
+
+// Make sure car rotation works well on touchscreens
+let isDragging = false;
+let previousMouseX = 0;
+let previousTouchX = 0;
+
+// Add these touch event handlers for car rotation
+document.addEventListener('touchstart', function(e) {
+    // Don't start dragging if touching a button
+    if (e.target.tagName.toLowerCase() === 'button' || 
+        e.target.classList.contains('slider')) return;
+    
+    isDragging = true;
+    previousTouchX = e.touches[0].clientX;
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+    if (isDragging) {
+        let deltaX = e.touches[0].clientX - previousTouchX;
+        if (carGroup) {
+            carGroup.rotation.y += deltaX * 0.01;
+        }
+        previousTouchX = e.touches[0].clientX;
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', function() {
+    isDragging = false;
+}, { passive: true });
+
+// Force redraw on orientation change to fix layout issues
+window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+        if (renderer) {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.render(scene, camera);
+        }
+    }, 200);
+});
+    
+    // Global Car List & Index
+    const carModels = [
+        { name: "Porsche 911", file: "porsche.glb" },
+        { name: "MClaren Senna", file: "Senna.glb" },
+        { name: "Audi R8", file: "AudiR8.glb" },
+        { name: "Aventador", file: "Aventador.glb" },
+        { name: "Ferrari", file: "ferrari1.glb" },
+        { name: "Nissan R34", file: "NissanR34.glb" },
+        { name: "M Gullwing", file: "MGullwing.glb" },
+        { name: "KG Agera", file: "KGAgera.glb" },
+        { name: "AM Valk", file: "AMValk.glb" },
+    ];
+    
+    let currentCarIndex = 0;
+    
+    // Function to switch cars
+    function changeCarModel(direction) {
+        currentCarIndex += direction;
+    
+        // Ensure the index stays within bounds
+        if (currentCarIndex < 0) {
+            currentCarIndex = carModels.length - 1; // Wrap to last car
+        } else if (currentCarIndex >= carModels.length) {
+            currentCarIndex = 0; // Wrap to first car
+        }
+    
+        console.log(`🔄 Switching to: ${carModels[currentCarIndex].name}`);
+        loadSelectedCar();
+    }
+    
+    // Function to update car selection
+    function loadSelectedCar() {
+        const carNameBox = document.getElementById("carName");
+        carNameBox.textContent = carModels[currentCarIndex].name;
+    
+        console.log(`🚗 Loading new car: ${carModels[currentCarIndex].file}`);
+    
+        // Remove previous car model from the scene
+        if (carGroup) {
+            while (carGroup.children.length > 0) {
+                carGroup.remove(carGroup.children[0]);
+            }
+            scene.remove(carGroup);
+        }
+    
+        // Load the new car
+        loadCarModel(carModels[currentCarIndex].file);
+    }
+    
+    // Function to load a new car
+    function loadCarModel(carFile) {
+        if (carGroup) {
+            scene.remove(carGroup);
+        }
+    
+        carGroup = new THREE.Group();
+        scene.add(carGroup);
+    
+        const gltfLoader = new THREE.GLTFLoader();
+        gltfLoader.load(carFile, function (gltf) {
+            let newCar = gltf.scene;
+            newCar.scale.set(1.2, 1.2, 1.2);
+    
+            // Center the car in the scene
+            const bbox = new THREE.Box3().setFromObject(newCar);
+            const center = bbox.getCenter(new THREE.Vector3());
+            newCar.position.sub(center);
+
+            
+    
+            // Apply material and shadow settings
+            newCar.traverse((node) => {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    node.receiveShadow = true;
+    
+                    if (!(node.material instanceof THREE.MeshStandardMaterial)) {
+                        node.material = new THREE.MeshStandardMaterial({
+                            color: node.material.color,
+                            metalness: 0.5,
+                            roughness: 0.5,
+                            envMap: scene.environment,
+                            envMapIntensity: 5
+                        });
+                    }
+    
+                    node.material.envMap = scene.environment;
+                    node.material.envMapIntensity = 5;
+                    node.material.needsUpdate = true;
+    
+                    // Identify car paint material
+                    if (["body", "paint", "carpaint", "color"].some(name => node.material.name.toLowerCase().includes(name))) {
+                        carMaterial = node.material;
+                        console.log("✅ New Car Paint Material:", carMaterial.name);
+                    }
+                }
+            });
+    
+            carGroup.add(newCar);
+            renderer.render(scene, camera); // Force update after loading
+        });
+    }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Get loading screen elements
+            const loadingScreen = document.getElementById('loadingScreen');
+            const loadingProgress = document.getElementById('loadingProgress');
+            const loadingCar = document.getElementById('loadingCar');
+            
+            // Define the total number of cars to load
+            const totalCars = carModels.length;
+            let carsLoaded = 0;
+            
+            // Function to update loading progress
+            function updateProgress(carName = "") {
+                carsLoaded++;
+                const percentage = Math.floor((carsLoaded / totalCars) * 100);
+                loadingProgress.style.width = percentage + "%";
+                loadingCar.textContent = carName;
+                
+                // If all cars are loaded, hide the loading screen
+                if (carsLoaded >= totalCars) {
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = '0';
+                        loadingScreen.style.transition = 'opacity 0.5s ease-out';
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                        }, 500);
+                    }, 500); // Show 100% for half a second before fading
+                }
+            }
+            
+            // Function to preload all car models
+            function preloadCars() {
+                let loader = new THREE.GLTFLoader();
+                
+                carModels.forEach((car, index) => {
+                    // Use a slight delay for each car to show loading progress
+                    setTimeout(() => {
+                        loadingCar.textContent = `LOADING ${car.name}`;
+                        
+                        loader.load(car.file, function(gltf) {
+                            // Car loaded successfully
+                            console.log(`✅ Preloaded: ${car.name}`);
+                            updateProgress(car.name);
+                        }, 
+                        // Progress callback - not used
+                        undefined, 
+                        // Error callback
+                        function(error) {
+                            console.error(`❌ Error loading ${car.name}:`, error);
+                            updateProgress("Error: " + car.name);
+                        });
+                    }, index * 300); // Staggered loading with 300ms delay between each
+                });
+            }
+            
+            // Start preloading after a short delay to ensure everything is initialized
+            setTimeout(preloadCars, 500);
+        });
+    </script>
+    
+    
+    
+   
+   
+</body>
+</html>
+
+
+
+
+
+
+
